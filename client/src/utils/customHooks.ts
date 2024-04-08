@@ -1,24 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export type MessageType =
-    | "set-id"
-    | "message"
-    | "navigate"
-    | "error"
-    | "set-id-confirmation"
-    | "arrow-key"
-    | "reset"
-    | "activeClient";
+import type { Message } from "../interfaces";
 
-export type Message = {
-    type: MessageType;
-    id?: string;
-    message?: string;
-    key?: string;
-    url?: string;
-};
-
+/**
+ * Custom hook for managing a WebSocket connection.
+ * @param url - The URL of the WebSocket server.
+ * @returns An object containing the current status, client ID, active client status, received message, and a function to send messages.
+ */
 export const useWebSocket = (url: string) => {
     const [message, setMessage] = useState<Message | null>(null);
     const [status, setStatus] = useState<"disconnected" | "connected">(
@@ -31,6 +20,9 @@ export const useWebSocket = (url: string) => {
 
     const navigate = useNavigate();
 
+    /**
+     * Connects to the WebSocket server.
+     */
     const connect = useCallback(() => {
         // If there's an existing WebSocket connection that's open or connecting, don't create a new one
         if (
@@ -103,6 +95,10 @@ export const useWebSocket = (url: string) => {
         }
     }, [activeClient, clientId]);
 
+    /**
+     * Sends a message through the WebSocket connection.
+     * @param data - The data to send.
+     */
     const sendMessage = (data: unknown) => {
         if (
             socketRef.current &&

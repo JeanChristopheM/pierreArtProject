@@ -8,6 +8,16 @@ import {
 } from "./utils";
 import { CLIENT_AMOUNT } from "./constants";
 
+/**
+ * Handles incoming messages from WebSocket clients.
+ *
+ * @param wss - The WebSocket server instance.
+ * @param ws - The WebSocket client instance.
+ * @param message - The incoming message.
+ * @param clients - A map of client IDs and their corresponding WebSocket instances.
+ * @param getActiveClient - A function that returns the ID of the active client.
+ * @param setActiveClient - A function that sets the active client ID.
+ */
 export const handleMessage = (
     wss: WebSocketServer,
     ws: WebSocket,
@@ -61,6 +71,12 @@ export const handleMessage = (
     }
 };
 
+/**
+ * Handles the registration of clients and assigns them an ID.
+ * @param clients - A map of client IDs to WebSocket instances.
+ * @param ws - The WebSocket instance of the client being registered.
+ * @param id - Optional ID to assign to the client.
+ */
 export const handleRegistration = (
     clients: Map<number, WebSocket>,
     ws: WebSocket,

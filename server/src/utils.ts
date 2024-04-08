@@ -34,6 +34,12 @@ export const sendActiveClient = (ws: WebSocket, id: number) => {
     );
 };
 
+/**
+ * Checks if the WebSocket instance is already registered and returns the registered ID, if any.
+ * @param clients - A map of client IDs to WebSocket instances.
+ * @param ws - The WebSocket instance to check.
+ * @returns A tuple containing a boolean indicating if the WebSocket is already registered and the registered ID, if any.
+ */
 export const isSocketAlreadyRegistered = (
     clients: Map<number, WebSocket>,
     ws: WebSocket,

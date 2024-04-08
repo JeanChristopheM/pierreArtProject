@@ -2,10 +2,12 @@ import express from "express";
 import { createServer } from "http";
 import { WebSocket, Server as WebSocketServer } from "ws";
 import cors from "cors";
-import { Message } from "./interfaces";
-import { handleMessage, handleRegistration } from "./handlers";
 import path from "path";
+
+import { handleMessage, handleRegistration } from "./handlers";
 import { isSocketAlreadyRegistered, sendActiveClient } from "./utils";
+
+import type { Message } from "./interfaces";
 
 const app = express();
 const port = 3000;
@@ -31,6 +33,7 @@ app.get("/", (req, res) =>
 
 wss.on("connection", (ws) => {
     handleRegistration(clients, ws);
+
     ws.on("message", (data) => {
         const message: Message = JSON.parse(data.toString());
         handleMessage(
@@ -43,12 +46,14 @@ wss.on("connection", (ws) => {
         );
         sendActiveClient(ws, activeClient);
     });
+
     ws.on("close", () => {
         const [isRegistered, id] = isSocketAlreadyRegistered(clients, ws);
         if (isRegistered) {
             clients.delete(id);
         }
     });
+
     sendActiveClient(ws, activeClient);
 });
 
