@@ -5,7 +5,11 @@ import { Outlet, useNavigate } from "react-router-dom";
 
 const App = () => {
     const { status, clientId, isActive, message, sendMessage } = useWebSocket(
-        "ws://localhost:3000",
+        `ws://${
+            window.location.href.includes("localhost")
+                ? "localhost"
+                : "192.168.0.32"
+        }:3000`,
     );
 
     const navigate = useNavigate();

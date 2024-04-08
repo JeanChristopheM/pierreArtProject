@@ -54,6 +54,9 @@ wss.on("connection", (ws) => {
 
 // Handle upgrade requests from Express
 server.on("upgrade", (request, socket, head) => {
+    console.log(
+        "Client connected to http server asking for upgrade to WebSocket",
+    );
     wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit("connection", ws, request);
     });

@@ -81,7 +81,9 @@ export const useWebSocket = (url: string) => {
             setTimeout(connect, 3000);
         };
 
-        socketRef.current.onerror = (error) => console.log(error);
+        socketRef.current.onerror = (error) => {
+            console.log(error);
+        };
     }, [navigate, url]);
 
     useEffect(() => {
