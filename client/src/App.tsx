@@ -4,7 +4,7 @@ import { useWebSocket } from "./utils/customHooks";
 import { Outlet, useNavigate } from "react-router-dom";
 
 const App = () => {
-    const { status, clientId, isActive, message, sendMessage } = useWebSocket(
+    const { status, clientId, message, sendMessage } = useWebSocket(
         `ws://${
             window.location.href.includes("localhost")
                 ? "localhost"
@@ -13,12 +13,6 @@ const App = () => {
     );
 
     const navigate = useNavigate();
-
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const id = ((e.target as HTMLFormElement)[0] as HTMLInputElement).value;
-        sendMessage({ type: "set-id", id });
-    };
 
     useEffect(() => {
         if (message?.type === "reset") {
@@ -29,19 +23,21 @@ const App = () => {
     }, [clientId, message, navigate]);
 
     return (
-        <main className={isActive ? "active" : ""}>
+        <main>
             {clientId ? (
                 <Outlet />
             ) : (
                 <div id="client-id-selector">
-                    <form action="submit" onSubmit={handleSubmit}>
-                        <select name="client-id">
-                            <option>1</option>
-                            <option>2</option>
-                            <option>3</option>
-                        </select>
-                        <button type="submit">Confirm</button>
-                    </form>
+                    {Array.from(new Array(10)).map((c, i) => (
+                        <button
+                            key={i}
+                            onClick={() =>
+                                sendMessage({ type: "set-id", id: i + 1 })
+                            }
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
                 </div>
             )}
             <div id="websocket-status">

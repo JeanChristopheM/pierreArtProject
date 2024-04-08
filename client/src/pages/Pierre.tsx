@@ -1,7 +1,7 @@
 import React from "react";
 
 const Pierre = () => {
-    return <div>Coucou pierre !</div>;
+    return <div className="pierre_page">Coucou pierre !</div>;
 };
 
 export default Pierre;

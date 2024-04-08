@@ -14,8 +14,6 @@ export const useWebSocket = (url: string) => {
         "disconnected",
     );
     const [clientId, setClientId] = useState<number | null>(null);
-    const [activeClient, setActiveClient] = useState<number | null>(null);
-    const [isActive, setIsActive] = useState<boolean>(false);
     const socketRef = useRef<WebSocket | null>(null);
 
     const navigate = useNavigate();
@@ -58,9 +56,6 @@ export const useWebSocket = (url: string) => {
                     console.log("Received navigate message:", message.url);
                     navigate(message.url);
                     break;
-                case "activeClient":
-                    setActiveClient(message.id);
-                    break;
                 default:
                     console.log("Received message:", message);
             }
@@ -89,12 +84,6 @@ export const useWebSocket = (url: string) => {
         };
     }, [connect, url]); // Re-run effect if URL changes
 
-    useEffect(() => {
-        if (activeClient && clientId) {
-            setIsActive(activeClient === clientId);
-        }
-    }, [activeClient, clientId]);
-
     /**
      * Sends a message through the WebSocket connection.
      * @param data - The data to send.
@@ -108,5 +97,5 @@ export const useWebSocket = (url: string) => {
         }
     };
 
-    return { status, clientId, isActive, message, sendMessage };
+    return { status, clientId, message, sendMessage };
 };

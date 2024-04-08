@@ -4,6 +4,7 @@ import { WebSocket, Server as WebSocketServer } from "ws";
 import cors from "cors";
 import path from "path";
 
+import { defaultClientState, state, scenario } from "./constants";
 import { handleMessage, handleRegistration } from "./handlers";
 import { isSocketAlreadyRegistered, sendActiveClient } from "./utils";
 
@@ -12,17 +13,17 @@ import type { Message } from "./interfaces";
 const app = express();
 const port = 3000;
 
+let lastStep = 0;
+const getLastStep = () => lastStep;
+const setLastStep = (callback: (old: number) => number) => {
+    lastStep = callback(lastStep);
+};
+
 // Create a HTTP server
 const server = createServer(app);
 
 // Create a WebSocket server
 const wss = new WebSocketServer({ noServer: true });
-const clients = new Map<number, WebSocket>();
-let activeClient = 1;
-const getActiveClient = () => activeClient;
-const setActiveClient = (callback: (ac: number) => number) => {
-    activeClient = callback(activeClient);
-};
 
 app.use(cors()); // Enable CORS for all routes
 
@@ -32,7 +33,7 @@ app.get("/", (req, res) =>
 );
 
 wss.on("connection", (ws) => {
-    handleRegistration(clients, ws);
+    handleRegistration(state, ws);
 
     ws.on("message", (data) => {
         const message: Message = JSON.parse(data.toString());
@@ -40,21 +41,20 @@ wss.on("connection", (ws) => {
             wss,
             ws,
             message,
-            clients,
-            getActiveClient,
-            setActiveClient,
+            state,
+            scenario,
+            getLastStep,
+            setLastStep,
         );
-        sendActiveClient(ws, activeClient);
     });
 
     ws.on("close", () => {
-        const [isRegistered, id] = isSocketAlreadyRegistered(clients, ws);
+        const [isRegistered, id] = isSocketAlreadyRegistered(state, ws);
+
         if (isRegistered) {
-            clients.delete(id);
+            state.set(id, defaultClientState);
         }
     });
-
-    sendActiveClient(ws, activeClient);
 });
 
 // Handle upgrade requests from Express

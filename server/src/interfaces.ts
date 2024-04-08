@@ -4,7 +4,9 @@ export type MessageType =
     | "navigate"
     | "error"
     | "set-id-confirmation"
-    | "arrow-key";
+    | "arrow-key"
+    | "activeClient"
+    | "reset";
 
 export type Message = {
     type: MessageType;

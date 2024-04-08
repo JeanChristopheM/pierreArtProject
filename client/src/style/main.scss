@@ -73,8 +73,10 @@ td {
 }
 
 body {
-    background-color: rgb(57, 57, 57);
-    color: white;
+    &:has(.blank_page) {
+        background-color: black;
+        color: white;
+    }
 }
 
 #websocket-status {
@@ -82,6 +84,15 @@ body {
     bottom: 0;
 }
 
-main.active {
-    background-color: rgb(223, 31, 31);
+#video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+}
+
+.pierre_page {
+    background-color: red;
+    font-size: 5rem;
 }

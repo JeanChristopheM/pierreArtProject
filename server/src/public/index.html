@@ -6,7 +6,13 @@
     <body>
         <h1>Press the arrow keys to send messages to the server</h1>
         <script>
-            const socket = new WebSocket("ws://localhost:3000");
+            const socket = new WebSocket(
+                `ws://${
+                    window.location.href.includes("localhost")
+                        ? "localhost"
+                        : "192.168.0.32"
+                }:3000`,
+            );
 
             window.addEventListener("keydown", (event) => {
                 socket.send(

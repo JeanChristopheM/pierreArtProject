@@ -1,12 +1,15 @@
 import { WebSocket, WebSocketServer } from "ws";
-import { Message } from "./interfaces";
+
 import {
     broadcast,
     isSocketAlreadyRegistered,
     sendError,
     sendNavigate,
 } from "./utils";
-import { CLIENT_AMOUNT } from "./constants";
+
+import type { Message } from "./interfaces";
+import { getActionIdFromLastActionId, type State } from "./constants";
+import { actions } from "./actions";
 
 /**
  * Handles incoming messages from WebSocket clients.
@@ -22,49 +25,45 @@ export const handleMessage = (
     wss: WebSocketServer,
     ws: WebSocket,
     message: Message,
-    clients: Map<number, WebSocket>,
-    getActiveClient: () => number,
-    setActiveClient: (callback: (ac: number) => number) => void,
+    state: State,
+    scenario: Map<number, number[]>,
+    getLastStep: () => number,
+    setLastStep: (callback: (old: number) => number) => void,
 ) => {
     switch (message.type) {
         case "set-id":
             const id = Number(message.id);
-            handleRegistration(clients, ws, id);
+            handleRegistration(state, ws, id);
             break;
+        // User makes a choice
         case "arrow-key":
             console.log(`Received arrow key press: ${message.key}`);
-            switch (message.key) {
-                case "ArrowUp":
-                case "ArrowRight":
-                    setActiveClient((old) =>
-                        old >= CLIENT_AMOUNT ? 1 : old + 1,
-                    );
-                    break;
-                case "ArrowDown":
-                case "ArrowLeft":
-                    setActiveClient((old) =>
-                        old <= 1 ? CLIENT_AMOUNT : old - 1,
-                    );
-                    break;
-                case "p":
-                    broadcast(
-                        wss,
-                        JSON.stringify({ type: "navigate", url: "/pierre" }),
-                    );
-                    break;
-                case "r":
-                    broadcast(wss, JSON.stringify({ type: "reset" }));
-                    break;
-                default:
-                    console.log("Unhandled key:", message.key);
+            for (const [id, clientState] of state) {
+                clientState.currentScreen = "/blank";
             }
-            broadcast(
-                wss,
-                JSON.stringify({
-                    type: "activeClient",
-                    id: getActiveClient(),
-                }),
+            const actionId = getActionIdFromLastActionId(
+                scenario,
+                getLastStep(),
+                message.key === "1" ? 0 : 1,
             );
+            actions.find((a) => a.id === actionId)!.fn(wss, state);
+            setLastStep((old) => actionId);
+            for (const [id, clientState] of state) {
+                clientState.socket?.send(
+                    JSON.stringify({
+                        type: "navigate",
+                        url: clientState.currentScreen,
+                    }),
+                );
+            }
+            break;
+        case "navigate":
+            wss.clients.forEach((client) => {
+                sendNavigate(client, message.url!);
+            });
+            break;
+        case "reset":
+            broadcast(wss, JSON.stringify({ type: "reset" }));
             break;
         default:
             console.log("Unknown message type:", message.type);
@@ -78,12 +77,12 @@ export const handleMessage = (
  * @param id - Optional ID to assign to the client.
  */
 export const handleRegistration = (
-    clients: Map<number, WebSocket>,
+    state: State,
     ws: WebSocket,
     id?: number,
 ) => {
     const [socketAlreadyRegistered, socketId] = isSocketAlreadyRegistered(
-        clients,
+        state,
         ws,
     );
 
@@ -96,17 +95,17 @@ export const handleRegistration = (
                     id: socketId,
                 }),
             );
-            sendNavigate(ws, `/${socketId}`);
+            sendNavigate(ws, `/${state.get(socketId)?.currentScreen}`);
         }
     } else {
-        const slotContent = clients.get(id);
+        const slotContent = state.get(id);
 
         if (socketAlreadyRegistered) {
             sendError(ws, `Client already registered under ${socketId}`);
             console.log(
                 `Client tried to register with ID-${id} but already in use on ID-${socketId}`,
             );
-            sendNavigate(ws, `/${socketId}`);
+            sendNavigate(ws, `/${state.get(socketId)?.currentScreen}`);
         }
         // else if (slotContent && slotContent !== ws) {
         //     sendError(ws, `ID-${id} is already in use`);
@@ -115,7 +114,10 @@ export const handleRegistration = (
         //     );
         // }
         else {
-            clients.set(id, ws);
+            state.set(id, {
+                currentScreen: slotContent?.currentScreen || "/",
+                socket: ws,
+            });
             ws.send(
                 JSON.stringify({
                     type: "set-id-confirmation",
@@ -123,7 +125,7 @@ export const handleRegistration = (
                     id,
                 }),
             );
-            sendNavigate(ws, `/${id}`);
+            sendNavigate(ws, `${state.get(id)?.currentScreen}`);
             console.log(`Client set to ID-${id}`);
         }
     }

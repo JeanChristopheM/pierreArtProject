@@ -1,4 +1,5 @@
 import { WebSocket, WebSocketServer } from "ws";
+import { State } from "./constants";
 
 // Broadcast function to send a message to all connected clients
 export const broadcast = (wss: WebSocketServer, data: string) => {
@@ -41,11 +42,11 @@ export const sendActiveClient = (ws: WebSocket, id: number) => {
  * @returns A tuple containing a boolean indicating if the WebSocket is already registered and the registered ID, if any.
  */
 export const isSocketAlreadyRegistered = (
-    clients: Map<number, WebSocket>,
+    state: State,
     ws: WebSocket,
 ): [boolean, number] => {
-    for (const [id, client] of clients) {
-        if (client === ws) {
+    for (const [id, clientState] of state) {
+        if (clientState.socket === ws) {
             return [true, id];
         }
     }
